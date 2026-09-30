@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/*
+ * Rivya design tokens.
+ * Every colour, radius, shadow and easing used in the UI comes from here —
+ * components reference tokens (bg-primary, text-muted, shadow-card…) and never raw hex values.
+ */
+@theme {
+  /* Brand */
+  --color-primary: #5b0e2d;
+  --color-primary-hover: #470a23;
+  --color-primary-soft: #f7e8ee;
+  --color-primary-foreground: #ffffff;
+
+  --color-rose: #f47ca8;
+  --color-rose-soft: #fde8f0;
+  --color-rose-deep: #c9477a;
+
+  --color-gold: #d4af37;
+  --color-gold-soft: #f8f0d8;
+  --color-gold-deep: #9c7f1f;
+
+  /* Surfaces */
+  --color-blush: #fff7f9;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #fbf1f4;
+  --color-line: #efe2e7;
+  --color-line-strong: #e0cdd4;
+
+  /* Text. The brief's #777777 muted grey is nudged to #6e6e6e for WCAG AA on blush. */
+  --color-ink: #2c2c2c;
+  --color-muted: #6e6e6e;
+  --color-subtle: #9a8f93;
+
+  /* Feedback */
+  --color-success: #2f7d57;
+  --color-success-soft: #e6f4ec;
+  --color-warning: #a86a07;
+  --color-warning-soft: #fdf3e0;
+  --color-danger: #b42343;
+  --color-danger-soft: #fce8ec;
+
+  /* Typography */
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(2.75rem, 1.6rem + 4.6vw, 5.25rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.02em;
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  /* Elevation — soft, warm-tinted, never heavy */
+  --shadow-xs: 0 1px 2px rgb(91 14 45 / 0.04);
+  --shadow-card: 0 1px 2px rgb(91 14 45 / 0.04), 0 8px 24px -12px rgb(91 14 45 / 0.12);
+  --shadow-lift: 0 2px 6px rgb(91 14 45 / 0.05), 0 18px 40px -18px rgb(91 14 45 / 0.22);
+  --shadow-float: 0 24px 60px -24px rgb(44 10 24 / 0.35);
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-fade-in: fade-in 200ms var(--ease-soft);
+  --animate-rise: rise 280ms var(--ease-soft);
+  --animate-sheet-up: sheet-up 320ms var(--ease-soft);
+  --animate-sheet-left: sheet-left 320ms var(--ease-soft);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)) scale(0.98); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes sheet-left {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-blush);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-serif);
+    color: var(--color-primary);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-rose-soft);
+    color: var(--color-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-rose-deep);
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-sunken) 0%,
+    #f6e9ee 50%,
+    var(--color-surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
