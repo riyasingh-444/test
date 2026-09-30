@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean };
+/** `icon` is a rendered element (e.g. <CalendarDays />) so server layouts can pass it to this client component. */
+export type NavItem = { href: string; label: string; icon: React.ReactNode; exact?: boolean };
 
 /** Vertical nav on desktop, horizontally scrolling pills on mobile. */
 export function DashboardNav({ items, label }: { items: NavItem[]; label: string }) {
@@ -13,7 +13,7 @@ export function DashboardNav({ items, label }: { items: NavItem[]; label: string
   return (
     <nav aria-label={label}>
       <ul className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:px-0">
-        {items.map(({ href, label, icon: Icon, exact }) => {
+        {items.map(({ href, label, icon, exact }) => {
           const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <li key={href}>
@@ -25,7 +25,7 @@ export function DashboardNav({ items, label }: { items: NavItem[]; label: string
                   active ? "bg-primary text-white lg:bg-primary-soft lg:text-primary" : "bg-surface text-ink hover:text-primary lg:bg-transparent lg:hover:bg-surface",
                 )}
               >
-                <Icon className="size-4" aria-hidden="true" />
+                <span className="[&_svg]:size-4" aria-hidden="true">{icon}</span>
                 {label}
               </Link>
             </li>
