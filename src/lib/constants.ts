@@ -82,6 +82,8 @@ export const CURRENCY = "INR";
 export const AUTH_COOKIES = {
   access: "rivya_at",
   refresh: "rivya_rt",
+  /** Non-sensitive flag (not httpOnly) signalling that a refresh session exists. */
+  hint: "rivya_session",
   oauthState: "rivya_oauth_state",
   oauthVerifier: "rivya_oauth_verifier",
 } as const;

@@ -1,8 +1,12 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+    // `server-only` throws outside the React server graph; tests exercise server code directly.
+    alias: { "server-only": fileURLToPath(new URL("./tests/stubs/server-only.ts", import.meta.url)) },
+  },
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
