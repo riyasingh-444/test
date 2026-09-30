@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WISHLIST_TARGETS } from "@/lib/constants";
 import { objectId, pageQuery } from "./common";
 
+/** Ownership of the asset (our cloud + the user's folder) is re-checked server-side in the service. */
 export const reviewImageSchema = z.object({
   url: z.url().refine((u) => u.startsWith("https://res.cloudinary.com/"), "Images must be uploaded via Rivya"),
   publicId: z.string().max(200).optional(),

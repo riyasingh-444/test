@@ -8,7 +8,7 @@ import { formatPaise } from "@/lib/utils";
 import type { BookingAction, CreateBookingInput } from "@/lib/validation/booking";
 import type { AuthUser } from "@/server/auth/current-user";
 import { withTransaction } from "@/server/db/transactions";
-import { actorFor, checkTransition } from "@/server/domain/booking-state";
+import { checkTransition } from "@/server/domain/booking-state";
 import { isSlotBookable } from "@/server/domain/slots";
 import { errors } from "@/server/http/errors";
 import { toBooking } from "@/server/mappers";

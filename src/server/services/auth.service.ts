@@ -115,10 +115,10 @@ export const authService = {
     return { user: toPublicUser(user), tokens };
   },
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(userId: string, currentPassword: string | undefined, newPassword: string) {
     const user = await User.findById(userId).select("+passwordHash");
     if (!user) throw errors.notFound("User");
-    if (user.passwordHash && !(await verifyPassword(user.passwordHash, currentPassword))) {
+    if (user.passwordHash && !(await verifyPassword(user.passwordHash, currentPassword ?? ""))) {
       throw errors.validation({ currentPassword: ["Current password is incorrect"] });
     }
     user.passwordHash = await hashPassword(newPassword);

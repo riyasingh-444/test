@@ -42,3 +42,6 @@ next-env.d.ts
 
 # allow the env template
 !.env.example
+
+# local dev database (npm run db:local)
+/.local-db/

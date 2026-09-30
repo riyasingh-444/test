@@ -132,6 +132,27 @@ export const discoveryService = {
     return look;
   },
 
+  /** Recent 5★ verified reviews with text, for homepage testimonials. */
+  async featuredReviews(limit = 3) {
+    const reviews = await Review.find({ status: "PUBLISHED", rating: 5, comment: { $exists: true, $ne: "" } })
+      .sort({ createdAt: -1 })
+      .limit(limit * 4)
+      .lean();
+    // One per provider for variety.
+    const seen = new Set<string>();
+    const picked = reviews.filter((r) => !seen.has(String(r.providerId)) && seen.add(String(r.providerId))).slice(0, limit);
+    const artists = await Artist.find({ _id: { $in: picked.map((r) => r.providerId) } }).select("slug displayName").lean();
+    const salons = await Salon.find({ _id: { $in: picked.map((r) => r.providerId) } }).select("slug name").lean();
+    const names = new Map<string, { name: string; href: string }>([
+      ...artists.map((a) => [String(a._id), { name: a.displayName, href: `/artists/${a.slug}` }] as const),
+      ...salons.map((s) => [String(s._id), { name: s.name, href: `/salons/${s.slug}` }] as const),
+    ]);
+    return picked.flatMap((r) => {
+      const p = names.get(String(r.providerId));
+      return p ? [{ ...toReview(r), provider: p }] : [];
+    });
+  },
+
   /** Increment profile view counters (total + daily bucket for analytics). Fire-and-forget. */
   async recordProfileView(providerType: ProviderType, providerId: Types.ObjectId | string) {
     const model = providerType === "ARTIST" ? Artist : Salon;

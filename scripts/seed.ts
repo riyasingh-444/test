@@ -134,6 +134,22 @@ const LOOK_POOLS: Record<string, { photo: PhotoKey; title: string; styles: strin
   ],
 };
 
+/** Which category a salon "work" photo depicts (salon looks are only created when it matches). */
+const PHOTO_CATEGORY: Partial<Record<PhotoKey, string>> = {
+  hairWash: "haircut",
+  massage: "spa",
+  blowDry: "hair-styling",
+  curls: "hair-styling",
+  nailsNude: "manicure",
+  nailsDark: "nail-art",
+  nailPainting: "manicure",
+  facial: "facial",
+  serum: "skincare",
+  indianBride: "bridal-makeup",
+};
+
+const INTERIORS = new Set<PhotoKey>(["salonChairs", "salonPink", "salonDark", "salonWhite", "salonModern", "hairSalonBusy"]);
+
 const CATEGORY_IMAGES: Partial<Record<string, PhotoKey>> = {
   "bridal-makeup": "indianBride",
   "pre-bridal": "facial",
@@ -314,6 +330,9 @@ async function main() {
   const weekly = [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, isOpen: day !== 1, open: day === 0 ? "11:00" : "10:00", close: "20:00" }));
   const today = todayKey();
 
+  // Looks are inserted at the end in shuffled order so the newest-first feed interleaves partners.
+  const pendingLooks: Record<string, unknown>[] = [];
+
   type Provider = { type: "ARTIST" | "SALON"; id: Types.ObjectId; name: string; slug: string; services: { _id: Types.ObjectId; name: string; price: number; durationMin: number; bufferMin: number }[] };
   const providers: Provider[] = [];
 
@@ -376,11 +395,14 @@ async function main() {
     await Availability.create({ providerType: "ARTIST", providerId: artist._id, weeklyHours: weekly, minNoticeMin: 180 });
 
     // Portfolio looks
-    const looks = a.cats.flatMap((c) => (LOOK_POOLS[c] ?? []).map((l) => ({ ...l, catSlug: c })));
+    const seenPhotos = new Set<PhotoKey>();
+    const looks = a.cats
+      .flatMap((c) => (LOOK_POOLS[c] ?? []).map((l) => ({ ...l, catSlug: c })))
+      .filter((l) => !seenPhotos.has(l.photo) && seenPhotos.add(l.photo));
     for (const [i, l] of looks.entries()) {
       const h = [1200, 1500, 1000, 1350][i % 4]!;
       const svc = services.find((s) => String(s.categoryId) === String(cats.get(l.catSlug)!._id));
-      await PortfolioItem.create({
+      pendingLooks.push({
         providerType: "ARTIST",
         providerId: artist._id,
         image: img(l.photo, 1000, h, l.title),
@@ -445,9 +467,11 @@ async function main() {
     }
     await Salon.updateOne({ _id: salon._id }, { startingPrice: Math.min(...services.map((x) => x.price)) });
     await Availability.create({ providerType: "SALON", providerId: salon._id, weeklyHours: weekly.map((w) => ({ ...w, isOpen: true })), minNoticeMin: 120, capacity: 3 });
-    for (const [i, g] of s.gallery.entries()) {
-      const catSlug = s.cats[i % s.cats.length]!;
-      await PortfolioItem.create({
+    // Interior shots belong in the salon gallery, not the looks feed.
+    const workShots = s.gallery.filter((g) => !INTERIORS.has(g) && s.cats.includes(PHOTO_CATEGORY[g] ?? ""));
+    for (const [i, g] of workShots.entries()) {
+      const catSlug = PHOTO_CATEGORY[g]!;
+      pendingLooks.push({
         providerType: "SALON",
         providerId: salon._id,
         image: img(g, 1000, [1200, 1000, 1400][i % 3]!, s.name),
@@ -460,6 +484,13 @@ async function main() {
     providers.push({ type: "SALON", id: salon._id, name: s.name, slug: salonSlug, services });
   }
   console.log(`Salons: ${SALONS.length}`);
+
+  for (let i = pendingLooks.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [pendingLooks[i], pendingLooks[j]] = [pendingLooks[j]!, pendingLooks[i]!];
+  }
+  for (const look of pendingLooks) await PortfolioItem.create(look);
+  console.log(`Looks: ${pendingLooks.length}`);
 
   /* Completed bookings + verified reviews */
   let reviews = 0;

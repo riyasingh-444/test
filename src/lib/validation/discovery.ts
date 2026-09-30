@@ -20,6 +20,8 @@ export const providerSearchSchema = z.object({
   mode: z.enum(BOOKING_MODES).optional(),
   verified: bool.optional(),
   available: z.enum(["today", "week"]).optional(),
+  /** Specific day (YYYY-MM-DD): only providers working that day. */
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   sort: z.enum(SEARCH_SORTS).default("recommended"),
   page: z.coerce.number().int().min(1).max(500).default(1),
   limit: z.coerce.number().int().min(1).max(PAGINATION.maxLimit).default(PAGINATION.defaultLimit),

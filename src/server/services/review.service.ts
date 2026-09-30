@@ -10,6 +10,7 @@ import { Artist, Booking, Review, Salon, User } from "@/server/models";
 import { notificationService } from "@/server/notifications";
 import type { ReviewDTO } from "@/types/dto";
 import { getOwnedProvider, loadProvider } from "./provider-access";
+import { isOwnedAssetUrl } from "@/server/providers/cloudinary";
 
 /** Recompute denormalised rating aggregates from published reviews. */
 export async function refreshProviderRating(providerType: ProviderType, providerId: Types.ObjectId) {
@@ -32,6 +33,9 @@ export const reviewService = {
     if (booking.status !== "COMPLETED") throw errors.conflict("You can review a booking once it's completed");
     if (booking.reviewId) throw errors.conflict("You've already reviewed this booking");
 
+    if (input.images.some((img) => !isOwnedAssetUrl(img.url, "reviews", user.id))) {
+      throw errors.validation({ images: ["Please upload photos through Rivya"] });
+    }
     const customer = await User.findById(user.id).select("name").lean();
     const review = await withTransaction(async (session) => {
       const [r] = await Review.create(

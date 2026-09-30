@@ -26,7 +26,8 @@ export const otpVerifySchema = z.object({
 
 export const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200).optional() });
 
+/** `currentPassword` is required by the service only when the account already has one (Google/OTP users may set a first password). */
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1).max(128),
+  currentPassword: z.string().max(128).optional(),
   newPassword: password,
 });

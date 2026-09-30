@@ -77,7 +77,14 @@ export class MongoSearchService implements SearchService {
         ]
       : [{ $match: filter }];
 
-    if (p.available) pipeline.push(...this.availabilityStages(type, p.available));
+    const days = p.date
+      ? [p.date]
+      : p.available === "today"
+        ? [todayKey()]
+        : p.available === "week"
+          ? Array.from({ length: 7 }, (_, i) => addDaysToKey(todayKey(), i))
+          : null;
+    if (days) pipeline.push(...this.availabilityStages(type, days));
 
     const sort = this.sortStage(p.sort, hasGeo);
     if (sort.score) pipeline.push(...this.ranking.scoreStages({ hasGeo }));
@@ -125,9 +132,7 @@ export class MongoSearchService implements SearchService {
    * "Available today / this week" = has working hours on at least one of those days that
    * isn't fully blocked. This is a day-level signal; exact free slots are shown on the profile.
    */
-  private availabilityStages(type: ProviderType, window: "today" | "week"): PipelineStage[] {
-    const start = todayKey();
-    const days = window === "today" ? [start] : Array.from({ length: 7 }, (_, i) => addDaysToKey(start, i));
+  private availabilityStages(type: ProviderType, days: string[]): PipelineStage[] {
     return [
       {
         $lookup: {
