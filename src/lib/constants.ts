@@ -29,6 +29,13 @@ export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 /** Statuses that occupy a provider's calendar slot. */
 export const ACTIVE_BOOKING_STATUSES: readonly BookingStatus[] = ["PENDING", "CONFIRMED"];
 
+/**
+ * ONLINE: slot held for BOOKING_HOLD_MINUTES; CONFIRMED only after server-verified payment.
+ * PAY_AT_VENUE: PENDING until the partner accepts.
+ */
+export const PAYMENT_METHODS = ["ONLINE", "PAY_AT_VENUE"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 export const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED", "REFUNDED"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 

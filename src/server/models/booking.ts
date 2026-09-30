@@ -1,5 +1,5 @@
 import { Schema, type InferSchemaType, type Types } from "mongoose";
-import { BOOKING_MODES, BOOKING_STATUSES, PAYMENT_STATUSES, PROVIDER_TYPES, ROLES } from "@/lib/constants";
+import { BOOKING_MODES, BOOKING_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES, PROVIDER_TYPES, ROLES } from "@/lib/constants";
 import { defineModel } from "./define";
 import { demoField, pointSchema } from "./shared";
 
@@ -14,6 +14,34 @@ const statusEventSchema = new Schema(
   { _id: false },
 );
 
+const serviceSnapshotSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    durationMin: { type: Number, required: true },
+    bufferMin: { type: Number, default: 0 },
+    price: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const providerSnapshotSchema = new Schema(
+  { name: { type: String, required: true }, slug: { type: String, required: true } },
+  { _id: false },
+);
+
+const pricingSchema = new Schema(
+  {
+    subtotal: { type: Number, required: true },
+    homeServiceFee: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+    platformFee: { type: Number, default: 0 },
+    total: { type: Number, required: true },
+    commission: { type: Number, default: 0 }, // platform's share of total
+    currency: { type: String, default: "INR" },
+  },
+  { _id: false },
+);
+
 const bookingSchema = new Schema(
   {
     code: { type: String, required: true, unique: true }, // human-friendly reference, e.g. RV-7K2M9Q
@@ -24,16 +52,8 @@ const bookingSchema = new Schema(
     staffArtistId: { type: Schema.Types.ObjectId, ref: "Artist", default: null },
     serviceId: { type: Schema.Types.ObjectId, ref: "Service", required: true },
     /** Immutable copy of what was booked, so later price edits don't rewrite history. */
-    serviceSnapshot: {
-      name: { type: String, required: true },
-      durationMin: { type: Number, required: true },
-      bufferMin: { type: Number, default: 0 },
-      price: { type: Number, required: true },
-    },
-    providerSnapshot: {
-      name: { type: String, required: true },
-      slug: { type: String, required: true },
-    },
+    serviceSnapshot: { type: serviceSnapshotSchema, required: true },
+    providerSnapshot: { type: providerSnapshotSchema, required: true },
     dateKey: { type: String, required: true }, // YYYY-MM-DD in provider timezone
     startAt: { type: Date, required: true },
     endAt: { type: Date, required: true },
@@ -49,19 +69,12 @@ const bookingSchema = new Schema(
       point: pointSchema,
     },
     customerNote: { type: String, trim: true, maxlength: 1000 },
-    pricing: {
-      subtotal: { type: Number, required: true },
-      homeServiceFee: { type: Number, default: 0 },
-      discount: { type: Number, default: 0 },
-      platformFee: { type: Number, default: 0 },
-      total: { type: Number, required: true },
-      commission: { type: Number, default: 0 }, // platform's share of total
-      currency: { type: String, default: "INR" },
-    },
+    pricing: { type: pricingSchema, required: true },
     offerCode: String,
+    paymentMethod: { type: String, enum: PAYMENT_METHODS, required: true },
     status: { type: String, enum: BOOKING_STATUSES, default: "PENDING", required: true },
     paymentStatus: { type: String, enum: PAYMENT_STATUSES, default: "PENDING", required: true },
-    /** Unpaid PENDING bookings release their slot after this instant. */
+    /** ONLINE bookings awaiting payment release their slot after this instant (null for PAY_AT_VENUE). */
     holdExpiresAt: Date,
     statusHistory: { type: [statusEventSchema], default: [] },
     cancellation: {
